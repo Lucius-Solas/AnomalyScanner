@@ -1,26 +1,11 @@
 //fol 23
 import { Ionicons } from '@expo/vector-icons'
 import {Tabs} from 'expo-router'
-import { ThemeProvider, DefaultTheme } from '@react-navigation/native';
-
-const MyTheme = {
-  ...DefaultTheme,
-  dark: false,
-  colors: {
-    ...DefaultTheme.colors,
-    primary: '#0F766E',
-    background: '#094738',
-    card: '#F4FBF9',
-    text: '#0F172A',
-    border: '#D1FAE5',
-    notification: '#EF4444',
-  },
-};
 
 export default function TabsLayout(){
     return (
-        <ThemeProvider value={MyTheme}>
-        <Tabs>
+    
+        <Tabs screenOptions={{ headerShown: false }}>
             <Tabs.Screen
             name = "index"
                 options = {{
@@ -54,6 +39,6 @@ export default function TabsLayout(){
             }}
             />
         </Tabs>
-        </ThemeProvider>
+       
     )
 }
