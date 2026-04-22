@@ -1,11 +1,34 @@
 import { StatusBar } from 'expo-status-bar';
-import { StyleSheet, Text, View, TextInput, Pressable, useWindowDimensions, TouchableOpacity } from 'react-native';
+import { useState } from 'react';
+import { Alert, Image, StyleSheet, Text, View, TextInput, useWindowDimensions, TouchableOpacity } from 'react-native';
 import { textStyles } from '../styles/textStyles';
 import { MaterialIcons} from '@expo/vector-icons';
+import * as ImagePicker from 'expo-image-picker';
 
 export default function App() {
   const { width } = useWindowDimensions();
   const photoButtonSize = width * 0.9;
+  const [photoUri, setPhotoUri] = useState<string | null>(null);
+
+  const pickImageFromGallery = async () => {
+    const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
+
+    if (permission.status !== 'granted') {
+      Alert.alert('Permission needed', 'Please allow access to your photo library to select an image.');
+      return;
+    }
+
+    const result = await ImagePicker.launchImageLibraryAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [16, 9],
+      quality: 1,
+    });
+
+    if (!result.canceled) {
+      setPhotoUri(result.assets[0].uri);
+    }
+  };
 
   return (
     <View style={styles.container}>
@@ -29,12 +52,23 @@ export default function App() {
       />
 
       <Text style={[textStyles.sys, styles.fieldLabel]}>Image</Text>
-      <TouchableOpacity style={[styles.photoButton, { width: photoButtonSize, height: photoButtonSize }]}> 
-        <MaterialIcons name="add-a-photo" size={28} color="#84ced6" />
-        <Text style={styles.photoButtonText}>Add your photo</Text>
+      <TouchableOpacity
+        style={[styles.photoButton, { width: photoButtonSize, height: photoButtonSize }]}
+        onPress={pickImageFromGallery}
+        activeOpacity={0.8}
+      >
+        {photoUri ? (
+          <Image source={{ uri: photoUri }} style={styles.photoPreview} resizeMode="cover" />
+        ) : (
+          <>
+            <MaterialIcons name="add-a-photo" size={28} color="#84ced6" />
+            <Text style={styles.photoButtonText}>Add your photo</Text>
+          </>
+        )}
       </TouchableOpacity>
-      <TouchableOpacity style={[styles.saveButton, { width: width*0.9, height: 20 }]}> 
-        <Text style={styles.photoButtonText}>Save Anomaly</Text>
+
+      <TouchableOpacity style={[styles.saveButton, { width: width * 0.9 }]}> 
+        <Text style={styles.saveButtonText}>Save Anomaly</Text>
       </TouchableOpacity>
       <StatusBar style="auto" />
     </View>
@@ -77,6 +111,11 @@ const styles = StyleSheet.create({
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
+    overflow: 'hidden',
+  },
+  photoPreview: {
+    width: '100%',
+    height: '100%',
   },
   photoButtonText: {
     color: '#84ced6',
@@ -86,18 +125,19 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: 8,
+    height: 48,
     borderWidth: 1,
-    color:'#217e88',
-    borderColor: '#6B7280',
+    borderColor: '#217e88',
     borderRadius: 10,
     justifyContent: 'center',
     alignItems: 'center',
     gap: 8,
+    backgroundColor: '#217e88',
   },
   saveButtonText: {
     color: '#FFFFFF',
     fontSize: 16,
-    fontWeight: '500',
+    fontWeight: '600',
     textAlign: 'center',
   },
 });
