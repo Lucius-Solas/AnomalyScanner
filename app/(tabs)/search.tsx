@@ -43,10 +43,7 @@ function isValidDateInput(value: string) {
 }
 
 function mapToApodItem(item: NasaApodResponseItem): ApodItem {
-  const image =
-    item.media_type === 'image'
-      ? item.url || item.hdurl || ''
-      : item.thumbnail_url || item.url || '';
+  const image = item.url || item.hdurl || '';
 
   return {
     id: `${item.date}-${item.title}`,
@@ -109,6 +106,7 @@ export default function App() {
       const json = await response.json();
       const responseItems: NasaApodResponseItem[] = Array.isArray(json) ? json : [json];
       const mappedItems = responseItems
+        .filter((item) => item.media_type === 'image')
         .map(mapToApodItem)
         .filter((item) => item.image)
         .sort((a, b) => b.date.localeCompare(a.date));
