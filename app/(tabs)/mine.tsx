@@ -1,16 +1,19 @@
 import { StatusBar } from 'expo-status-bar';
-import { Image, Pressable, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { Image, Pressable, ScrollView, StyleSheet, Text, View, useWindowDimensions } from 'react-native';
+import { SavedAnomaly, useAnomalies } from '../../context/AnomalyContext';
 
 type AnomalyCardProps = {
-  title: string;
-  description: string;
-  timestamp: string;
+  anomaly: SavedAnomaly;
 };
 
-function AnomalyCard({ title, description, timestamp }: AnomalyCardProps) {
+function AnomalyCard({ anomaly }: AnomalyCardProps) {
   const { width } = useWindowDimensions();
   const cardWidth = width - 40;
   const imageHeight = cardWidth * 0.5;
+  const timestamp = new Date(anomaly.createdAt).toLocaleString();
+  const imageSource = anomaly.imageUri
+    ? { uri: anomaly.imageUri }
+    : require('../../assets/image/homeimage.jpg');
 
   return (
     <Pressable
@@ -21,14 +24,14 @@ function AnomalyCard({ title, description, timestamp }: AnomalyCardProps) {
       }}
     >
       <Image
-        source={require('../../assets/image/homeimage.jpg')}
+        source={imageSource}
         style={[styles.cardImage, { height: imageHeight }]}
         resizeMode="cover"
       />
 
       <View style={styles.cardBody}>
-        <Text style={styles.cardTitle}>{title}</Text>
-        <Text style={styles.cardDescription}>{description}</Text>
+        <Text style={styles.cardTitle}>{anomaly.title}</Text>
+        <Text style={styles.cardDescription}>{anomaly.description || 'No description provided.'}</Text>
         <Text style={styles.cardTime}>{timestamp}</Text>
       </View>
     </Pressable>
@@ -36,16 +39,23 @@ function AnomalyCard({ title, description, timestamp }: AnomalyCardProps) {
 }
 
 export default function App() {
+  const { anomalies } = useAnomalies();
+
   return (
     <View style={styles.container}>
       <Text style={styles.eyebrow}>ASSIGNED TO YOU</Text>
       <Text style={styles.heading}>My Anomalies</Text>
 
-      <AnomalyCard
-        title="Mission Section 31"
-        description="A very complicated mission."
-        timestamp="3/26/2026 7:09:50 PM"
-      />
+      <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
+        {anomalies.length === 0 ? (
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyTitle}>No anomalies yet</Text>
+            <Text style={styles.emptyText}>Create one in the New tab and it will appear here.</Text>
+          </View>
+        ) : (
+          anomalies.map((anomaly) => <AnomalyCard key={anomaly.id} anomaly={anomaly} />)
+        )}
+      </ScrollView>
 
       <StatusBar style="light" />
     </View>
@@ -72,12 +82,16 @@ const styles = StyleSheet.create({
     fontWeight: '700',
     marginBottom: 14,
   },
+  list: {
+    flex: 1,
+  },
   card: {
     borderRadius: 14,
     overflow: 'hidden',
     borderWidth: 1,
     borderColor: '#14385e',
     backgroundColor: '#0a2746',
+    marginBottom: 12,
   },
   cardImage: {
     width: '100%',
@@ -101,5 +115,23 @@ const styles = StyleSheet.create({
     color: '#57718d',
     fontSize: 12,
     marginTop: 8,
+  },
+  emptyState: {
+    borderRadius: 14,
+    borderWidth: 1,
+    borderColor: '#14385e',
+    backgroundColor: '#0a2746',
+    paddingHorizontal: 14,
+    paddingVertical: 16,
+  },
+  emptyTitle: {
+    color: '#f5f9ff',
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  emptyText: {
+    color: '#8ca4bd',
+    fontSize: 14,
+    marginTop: 6,
   },
 });
