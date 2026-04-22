@@ -4,11 +4,15 @@ import { Alert, Image, StyleSheet, Text, View, TextInput, useWindowDimensions, T
 import { textStyles } from '../styles/textStyles';
 import { MaterialIcons} from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
+import { useAnomalies } from '../../context/AnomalyContext';
 
 export default function App() {
   const { width } = useWindowDimensions();
   const photoButtonSize = width * 0.9;
   const [photoUri, setPhotoUri] = useState<string | null>(null);
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const { addAnomaly } = useAnomalies();
 
   const pickImageFromGallery = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -30,6 +34,21 @@ export default function App() {
     }
   };
 
+  const saveAnomaly = () => {
+    if (!title.trim()) {
+      Alert.alert('Missing title', 'Please enter a title before saving.');
+      return;
+    }
+
+    addAnomaly({
+      title: title.trim(),
+      description: description.trim(),
+      imageUri: photoUri,
+    });
+
+    Alert.alert('Saved', 'Your anomaly has been saved.');
+  };
+
   return (
     <View style={styles.container}>
       <Text style={textStyles.undertitle}>CREATE A REPORT</Text>
@@ -37,6 +56,8 @@ export default function App() {
       <Text style={textStyles.sys}>Title</Text>
 
       <TextInput
+        value={title}
+        onChangeText={setTitle}
         placeholder="Enter anomaly title"
         placeholderTextColor="#8A8A8A"
         style={styles.input}
@@ -44,6 +65,8 @@ export default function App() {
 
       <Text style={[textStyles.sys, styles.fieldLabel]}>Description</Text>
       <TextInput
+        value={description}
+        onChangeText={setDescription}
         placeholder="Put description here"
         placeholderTextColor="#8A8A8A"
         style={[styles.input, styles.descriptionInput]}
@@ -67,7 +90,7 @@ export default function App() {
         )}
       </TouchableOpacity>
 
-      <TouchableOpacity style={[styles.saveButton, { width: width * 0.9 }]}> 
+      <TouchableOpacity style={[styles.saveButton, { width: width * 0.9 }]} onPress={saveAnomaly} activeOpacity={0.8}> 
         <Text style={styles.saveButtonText}>Save Anomaly</Text>
       </TouchableOpacity>
       <StatusBar style="auto" />

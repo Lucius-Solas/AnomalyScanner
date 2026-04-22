@@ -1,5 +1,6 @@
 import {Stack} from 'expo-router'
 import { ThemeProvider, DefaultTheme } from '@react-navigation/native';
+import { AnomalyProvider } from '../context/AnomalyContext';
 
 const MyTheme = {
   ...DefaultTheme,
@@ -18,11 +19,13 @@ const MyTheme = {
 export default function Layout (){
     return(
         <ThemeProvider value={MyTheme}>
-        <Stack>
-            <Stack.Screen name = "(tabs)"
-            options = {{headerShown: false}}
-            />
-        </Stack>
+    <AnomalyProvider>
+      <Stack>
+        <Stack.Screen name = "(tabs)"
+        options = {{headerShown: false}}
+        />
+      </Stack>
+    </AnomalyProvider>
         </ThemeProvider>
     )
 }
