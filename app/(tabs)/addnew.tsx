@@ -9,10 +9,7 @@ import { useAnomalies } from '../../context/AnomalyContext';
 export default function App() {
   const { width } = useWindowDimensions();
   const photoButtonSize = width * 0.9;
-  const [photoUri, setPhotoUri] = useState<string | null>(null);
-  const [title, setTitle] = useState('');
-  const [description, setDescription] = useState('');
-  const { addAnomaly } = useAnomalies();
+  const { addAnomaly, draft, setDraft } = useAnomalies();
 
   const pickImageFromGallery = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -30,20 +27,20 @@ export default function App() {
     });
 
     if (!result.canceled) {
-      setPhotoUri(result.assets[0].uri);
+      setDraft({ ...draft, imageUri: result.assets[0].uri });
     }
   };
 
   const saveAnomaly = () => {
-    if (!title.trim()) {
+    if (!draft.title.trim()) {
       Alert.alert('Missing title', 'Please enter a title before saving.');
       return;
     }
 
     addAnomaly({
-      title: title.trim(),
-      description: description.trim(),
-      imageUri: photoUri,
+      title: draft.title.trim(),
+      description: draft.description.trim(),
+      imageUri: draft.imageUri,
     });
 
     Alert.alert('Saved', 'Your anomaly has been saved.');
@@ -56,8 +53,8 @@ export default function App() {
       <Text style={textStyles.sys}>Title</Text>
 
       <TextInput
-        value={title}
-        onChangeText={setTitle}
+        value={draft.title}
+        onChangeText={(text) => setDraft({ ...draft, title: text })}
         placeholder="Enter anomaly title"
         placeholderTextColor="#8A8A8A"
         style={styles.input}
@@ -65,8 +62,8 @@ export default function App() {
 
       <Text style={[textStyles.sys, styles.fieldLabel]}>Description</Text>
       <TextInput
-        value={description}
-        onChangeText={setDescription}
+        value={draft.description}
+        onChangeText={(text) => setDraft({ ...draft, description: text })}
         placeholder="Put description here"
         placeholderTextColor="#8A8A8A"
         style={[styles.input, styles.descriptionInput]}
@@ -76,12 +73,12 @@ export default function App() {
 
       <Text style={[textStyles.sys, styles.fieldLabel]}>Image</Text>
       <TouchableOpacity
-        style={[styles.photoButton, { width: photoButtonSize, height: photoButtonSize }]}
+        style={[styles.photoButton, { width: photoButtonSize, height: photoButtonSize*0.75 }]}
         onPress={pickImageFromGallery}
         activeOpacity={0.8}
       >
-        {photoUri ? (
-          <Image source={{ uri: photoUri }} style={styles.photoPreview} resizeMode="cover" />
+        {draft.imageUri ? (
+          <Image source={{ uri: draft.imageUri }} style={styles.photoPreview} resizeMode="cover" />
         ) : (
           <>
             <MaterialIcons name="add-a-photo" size={28} color="#84ced6" />

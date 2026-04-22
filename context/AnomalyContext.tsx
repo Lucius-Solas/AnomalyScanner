@@ -8,19 +8,34 @@ export type SavedAnomaly = {
   createdAt: string;
 };
 
+export type AnomalyDraft = {
+  title: string;
+  description: string;
+  imageUri: string | null;
+};
+
 type AnomalyContextValue = {
   anomalies: SavedAnomaly[];
   addAnomaly: (anomaly: Omit<SavedAnomaly, 'id' | 'createdAt'>) => void;
+  draft: AnomalyDraft;
+  setDraft: (draft: AnomalyDraft) => void;
 };
 
 const AnomalyContext = createContext<AnomalyContextValue | undefined>(undefined);
 
 export function AnomalyProvider({ children }: PropsWithChildren) {
   const [anomalies, setAnomalies] = useState<SavedAnomaly[]>([]);
+  const [draft, setDraft] = useState<AnomalyDraft>({
+    title: '',
+    description: '',
+    imageUri: null,
+  });
 
   const value = useMemo<AnomalyContextValue>(() => {
     return {
       anomalies,
+      draft,
+      setDraft,
       addAnomaly: (anomaly) => {
         setAnomalies((current) => [
           {
@@ -32,7 +47,7 @@ export function AnomalyProvider({ children }: PropsWithChildren) {
         ]);
       },
     };
-  }, [anomalies]);
+  }, [anomalies, draft]);
 
   return <AnomalyContext.Provider value={value}>{children}</AnomalyContext.Provider>;
 }
