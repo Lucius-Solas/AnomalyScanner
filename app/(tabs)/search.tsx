@@ -11,6 +11,7 @@ import {
   TextInput,
   View,
 } from 'react-native';
+import { useAnomalies } from '../../context/AnomalyContext';
 
 type ApodItem = {
   id: string;
@@ -60,11 +61,26 @@ function mapToApodItem(item: NasaApodResponseItem): ApodItem {
 }
 
 export default function App() {
+  const { addAnomaly } = useAnomalies();
   const [selected, setSelected] = useState<ApodItem | null>(null);
   const [fromDate, setFromDate] = useState('2026-03-20');
   const [toDate, setToDate] = useState('2026-03-26');
   const [records, setRecords] = useState<ApodItem[]>([]);
   const [loading, setLoading] = useState(false);
+
+  const saveSelectedToAnomalies = () => {
+    if (!selected) {
+      return;
+    }
+
+    addAnomaly({
+      title: selected.title,
+      description: selected.details,
+      imageUri: selected.image,
+    });
+
+    Alert.alert('Saved', 'APOD item was added to My Anomalies.');
+  };
 
   const searchApodRange = async () => {
     const trimmedFrom = fromDate.trim();
@@ -123,7 +139,7 @@ export default function App() {
           <Text style={styles.detailBody}>{selected.details}</Text>
         </ScrollView>
 
-        <Pressable style={styles.saveButton}>
+        <Pressable style={styles.saveButton} onPress={saveSelectedToAnomalies}>
           <Text style={styles.saveButtonText}>Save to My Anomalies</Text>
         </Pressable>
 
