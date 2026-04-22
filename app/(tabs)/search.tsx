@@ -1,11 +1,14 @@
 import { StatusBar } from 'expo-status-bar';
 import { useState } from 'react';
 import {
+  ActivityIndicator,
+  Alert,
   Image,
   Pressable,
   ScrollView,
   StyleSheet,
   Text,
+  TextInput,
   View,
 } from 'react-native';
 
@@ -13,65 +16,94 @@ type ApodItem = {
   id: string;
   date: string;
   title: string;
+  category: string;
   excerpt: string;
   details: string;
   author: string;
   image: string;
 };
 
-const records: ApodItem[] = [
-  {
-    id: '1',
-    date: '2026-03-26',
-    title: 'Black Holes and Neutron Stars: 218 Mergers and Counting',
-    excerpt:
-      'What is the sound of two black holes merging in deep space? Sound waves do not propagate in vacuum, but gravitational waves do.',
-    details:
-      'Using advanced observatories, astronomers identified hundreds of compact object mergers. Each event helps map how stars die and how black holes gain mass.',
-    author: 'LIGO / Virgo / KAGRA Collaboration',
-    image:
-      'https://images.unsplash.com/photo-1446776877081-d282a0f896e2?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: '2',
-    date: '2026-03-25',
-    title: 'The Guardians of Rapa Nui beneath the Milky Way',
-    excerpt:
-      'In the words of today\'s astrophotographer, “What have these silent sentinels watched pass across the sky?”',
-    details:
-      'A long exposure over Easter Island captures starlight, atmospheric glow, and ancient stone figures aligned under the Milky Way arc.',
-    author: 'Rositsa Dimitrova',
-    image:
-      'https://images.unsplash.com/photo-1462331940025-496dfbfc7564?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: '3',
-    date: '2026-03-23',
-    title: 'Light Pillars and Orion over Mohe',
-    excerpt:
-      'Pictured here are not auroras but light pillars, a phenomenon typically much closer to the ground than aurora curtains.',
-    details:
-      'In very cold air, flat ice crystals reflect city lights into vertical columns. The sky can look surreal, even while stars remain visible.',
-    author: 'APOD Editorial',
-    image:
-      'https://images.unsplash.com/photo-1475274047050-1d0c0975c63e?auto=format&fit=crop&w=1200&q=80',
-  },
-  {
-    id: '4',
-    date: '2026-03-21',
-    title: 'Galaxies in the River: NGC 1300 and NGC 1297',
-    excerpt:
-      'Spiral NGC 1300 and elliptical NGC 1297 are galaxies that lie on the banks of the southern constellation Eridanus.',
-    details:
-      'At nearly 70 million light-years away, this pair reveals different galaxy architectures: one with a central bar and sweeping spiral arms, another smoother and more compact.',
-    author: 'Dietmar Hager and Eric Benson',
-    image:
-      'https://images.unsplash.com/photo-1419242902214-272b3f66ee7a?auto=format&fit=crop&w=1400&q=80',
-  },
-];
+type NasaApodResponseItem = {
+  date: string;
+  title: string;
+  explanation?: string;
+  media_type: string;
+  url?: string;
+  hdurl?: string;
+  thumbnail_url?: string;
+  copyright?: string;
+};
+
+const APOD_API_KEY = 'DEMO_KEY';
+const DATE_REGEX = /^\d{4}-\d{2}-\d{2}$/;
+
+function isValidDateInput(value: string) {
+  return DATE_REGEX.test(value) && !Number.isNaN(new Date(value).getTime());
+}
+
+function mapToApodItem(item: NasaApodResponseItem): ApodItem {
+  const image =
+    item.media_type === 'image'
+      ? item.url || item.hdurl || ''
+      : item.thumbnail_url || item.url || '';
+
+  return {
+    id: `${item.date}-${item.title}`,
+    date: item.date,
+    title: item.title,
+    excerpt: item.explanation || 'No summary available.',
+    details: item.explanation || 'No details available.',
+    author: item.copyright || 'NASA APOD',
+    image,
+    category: item.media_type,
+  };
+}
 
 export default function App() {
   const [selected, setSelected] = useState<ApodItem | null>(null);
+  const [fromDate, setFromDate] = useState('2026-03-20');
+  const [toDate, setToDate] = useState('2026-03-26');
+  const [records, setRecords] = useState<ApodItem[]>([]);
+  const [loading, setLoading] = useState(false);
+
+  const searchApodRange = async () => {
+    const trimmedFrom = fromDate.trim();
+    const trimmedTo = toDate.trim();
+
+    if (!isValidDateInput(trimmedFrom) || !isValidDateInput(trimmedTo)) {
+      Alert.alert('Invalid date format', 'Use YYYY-MM-DD for both dates.');
+      return;
+    }
+
+    if (new Date(trimmedFrom) > new Date(trimmedTo)) {
+      Alert.alert('Invalid range', 'FROM date must be before TO date.');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const url = `https://api.nasa.gov/planetary/apod?api_key=${APOD_API_KEY}&start_date=${trimmedFrom}&end_date=${trimmedTo}&thumbs=true`;
+      const response = await fetch(url);
+
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+
+      const json = await response.json();
+      const responseItems: NasaApodResponseItem[] = Array.isArray(json) ? json : [json];
+      const mappedItems = responseItems
+        .map(mapToApodItem)
+        .filter((item) => item.image)
+        .sort((a, b) => b.date.localeCompare(a.date));
+
+      setRecords(mappedItems);
+    } catch (error) {
+      Alert.alert('Search failed', 'Could not load APOD results. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   if (selected) {
     return (
@@ -85,6 +117,7 @@ export default function App() {
 
         <ScrollView style={styles.detailScroll} showsVerticalScrollIndicator={false}>
           <Image source={{ uri: selected.image }} style={styles.detailImage} resizeMode="cover" />
+          <Text style={styles.detailCategory}>{selected.category.toUpperCase()}</Text>
           <Text style={styles.detailTitle}>{selected.title}</Text>
           <Text style={styles.detailAuthor}>© {selected.author}</Text>
           <Text style={styles.detailBody}>{selected.details}</Text>
@@ -108,27 +141,53 @@ export default function App() {
         <View>
           <Text style={styles.dateLabel}>FROM</Text>
           <View style={styles.datePill}>
-            <Text style={styles.datePillText}>20. Mar 2026</Text>
+            <TextInput
+              value={fromDate}
+              onChangeText={setFromDate}
+              style={styles.dateInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor="#9aacc1"
+            />
           </View>
         </View>
         <View>
           <Text style={styles.dateLabel}>TO</Text>
           <View style={styles.datePill}>
-            <Text style={styles.datePillText}>26. Mar 2026</Text>
+            <TextInput
+              value={toDate}
+              onChangeText={setToDate}
+              style={styles.dateInput}
+              autoCapitalize="none"
+              autoCorrect={false}
+              placeholder="YYYY-MM-DD"
+              placeholderTextColor="#9aacc1"
+            />
           </View>
         </View>
       </View>
 
-      <Pressable style={styles.searchButton}>
-        <Text style={styles.searchButtonText}>Search</Text>
+      <Pressable style={styles.searchButton} onPress={searchApodRange}>
+        <Text style={styles.searchButtonText}>{loading ? 'Searching...' : 'Search'}</Text>
       </Pressable>
 
+      {loading ? (
+        <View style={styles.loaderWrap}>
+          <ActivityIndicator size="small" color="#c7d8ef" />
+        </View>
+      ) : null}
+
       <ScrollView style={styles.list} showsVerticalScrollIndicator={false}>
+        {!loading && records.length === 0 ? (
+          <Text style={styles.emptyText}>No records yet. Enter a date range and tap Search.</Text>
+        ) : null}
         {records.map((item) => (
           <Pressable key={item.id} style={styles.card} onPress={() => setSelected(item)}>
             <Image source={{ uri: item.image }} style={styles.cardImage} resizeMode="cover" />
             <View style={styles.cardTextBlock}>
               <Text style={styles.cardDate}>{item.date}</Text>
+              <Text style={styles.cardCategory}>{item.category.toUpperCase()}</Text>
               <Text style={styles.cardTitle} numberOfLines={2}>
                 {item.title}
               </Text>
@@ -180,12 +239,14 @@ const styles = StyleSheet.create({
     backgroundColor: '#203650',
     borderRadius: 14,
     paddingHorizontal: 12,
-    paddingVertical: 6,
+    paddingVertical: 4,
+    width: 150,
   },
-  datePillText: {
+  dateInput: {
     color: '#e8f1ff',
-    fontSize: 22,
+    fontSize: 14,
     fontWeight: '500',
+    paddingVertical: 4,
   },
   searchButton: {
     backgroundColor: '#7d52ff',
@@ -202,6 +263,16 @@ const styles = StyleSheet.create({
   },
   list: {
     flex: 1,
+  },
+  loaderWrap: {
+    alignItems: 'center',
+    marginBottom: 8,
+  },
+  emptyText: {
+    color: '#86a1bf',
+    fontSize: 14,
+    marginTop: 8,
+    marginBottom: 12,
   },
   card: {
     flexDirection: 'row',
@@ -224,13 +295,19 @@ const styles = StyleSheet.create({
   cardDate: {
     color: '#607b9b',
     fontSize: 11,
-    marginBottom: 2,
+    marginBottom: 1,
+  },
+  cardCategory: {
+    color: '#7e65f0',
+    fontSize: 10,
+    fontWeight: '700',
+    marginBottom: 4,
   },
   cardTitle: {
     color: '#e8f1ff',
-    fontSize: 19,
+    fontSize: 16,
     fontWeight: '700',
-    lineHeight: 22,
+    lineHeight: 19,
   },
   cardExcerpt: {
     color: '#7f99b4',
@@ -276,11 +353,17 @@ const styles = StyleSheet.create({
     borderRadius: 14,
     marginBottom: 12,
   },
+  detailCategory: {
+    color: '#7e65f0',
+    fontSize: 11,
+    fontWeight: '700',
+    marginBottom: 6,
+  },
   detailTitle: {
     color: '#f2f6ff',
-    fontSize: 39,
+    fontSize: 30,
     fontWeight: '700',
-    lineHeight: 34,
+    lineHeight: 33,
     marginBottom: 8,
   },
   detailAuthor: {
@@ -290,7 +373,7 @@ const styles = StyleSheet.create({
   },
   detailBody: {
     color: '#96abc3',
-    fontSize: 19,
+    fontSize: 15,
     lineHeight: 22,
     paddingBottom: 90,
   },
