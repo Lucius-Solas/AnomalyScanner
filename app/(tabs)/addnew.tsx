@@ -1,5 +1,4 @@
 import { StatusBar } from 'expo-status-bar';
-import { useState } from 'react';
 import { Alert, Image, StyleSheet, Text, View, TextInput, useWindowDimensions, TouchableOpacity } from 'react-native';
 import { textStyles } from '../styles/textStyles';
 import { MaterialIcons} from '@expo/vector-icons';
@@ -10,6 +9,10 @@ export default function App() {
   const { width } = useWindowDimensions();
   const photoButtonSize = width * 0.9;
   const { addAnomaly, draft, setDraft } = useAnomalies();
+
+  const updateDraft = (partial: Partial<typeof draft>) => {
+    setDraft({ ...draft, ...partial });
+  };
 
   const pickImageFromGallery = async () => {
     const permission = await ImagePicker.requestMediaLibraryPermissionsAsync();
@@ -27,7 +30,7 @@ export default function App() {
     });
 
     if (!result.canceled) {
-      setDraft({ ...draft, imageUri: result.assets[0].uri });
+      updateDraft({ imageUri: result.assets[0].uri });
     }
   };
 
@@ -54,7 +57,7 @@ export default function App() {
 
       <TextInput
         value={draft.title}
-        onChangeText={(text) => setDraft({ ...draft, title: text })}
+        onChangeText={(text) => updateDraft({ title: text })}
         placeholder="Enter anomaly title"
         placeholderTextColor="#8A8A8A"
         style={styles.input}
@@ -63,7 +66,7 @@ export default function App() {
       <Text style={[textStyles.sys, styles.fieldLabel]}>Description</Text>
       <TextInput
         value={draft.description}
-        onChangeText={(text) => setDraft({ ...draft, description: text })}
+        onChangeText={(text) => updateDraft({ description: text })}
         placeholder="Put description here"
         placeholderTextColor="#8A8A8A"
         style={[styles.input, styles.descriptionInput]}

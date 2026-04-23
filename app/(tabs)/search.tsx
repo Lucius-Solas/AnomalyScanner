@@ -31,7 +31,6 @@ type NasaApodResponseItem = {
   media_type: string;
   url?: string;
   hdurl?: string;
-  thumbnail_url?: string;
   copyright?: string;
 };
 
@@ -96,7 +95,7 @@ export default function App() {
     setLoading(true);
 
     try {
-      const url = `https://api.nasa.gov/planetary/apod?api_key=${APOD_API_KEY}&start_date=${trimmedFrom}&end_date=${trimmedTo}&thumbs=true`;
+      const url = `https://api.nasa.gov/planetary/apod?api_key=${APOD_API_KEY}&start_date=${trimmedFrom}&end_date=${trimmedTo}`;
       const response = await fetch(url);
 
       if (!response.ok) {

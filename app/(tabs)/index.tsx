@@ -1,7 +1,7 @@
 import { StatusBar } from 'expo-status-bar';
 import { StyleSheet, Text, View, Image, useWindowDimensions, ScrollView } from 'react-native';
 import { useTheme } from '@react-navigation/native';
-import { Ionicons, MaterialIcons } from '@expo/vector-icons';
+import { Ionicons } from '@expo/vector-icons';
 import {textStyles} from '../styles/textStyles'
 
 const recentActivity = [
