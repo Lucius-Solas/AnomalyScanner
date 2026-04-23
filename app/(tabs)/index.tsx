@@ -186,7 +186,7 @@ export default function App() {
 
       <View style={[styles.statusCard, { borderColor: '#d8df56' }]}>
         <View style={styles.statusCardRow}>
-          <MaterialIcons name="warning-amber" size={20} color="#ecef35" style={{ marginRight: 8 }} />
+          <Ionicons name="triangle" size={20} color="#ecef35" style={{ marginRight: 8 }} />
           <Text style={styles.statusTitle}>Alert</Text>
         </View>
         <Text style={styles.statusText}>Anomaly EE-8F-XG became unstable.</Text>
