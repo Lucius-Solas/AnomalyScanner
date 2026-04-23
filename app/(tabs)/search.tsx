@@ -76,7 +76,7 @@ export default function App() {
       imageUri: selected.image,
     });
 
-    Alert.alert('Saved', 'APOD item was added to My Anomalies.');
+    Alert.alert('Saved', 'APOD item was added to my Anomalies.');
   };
 
   const searchApodRange = async () => {
